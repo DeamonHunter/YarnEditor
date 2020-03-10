@@ -8,6 +8,7 @@ export var data = {
   editingName: ko.observable('NewFile'),
   editingType: ko.observable('json'),
   editingFolder: ko.observable(null),
+  editingCode: ko.observable(null),
   editingFileFolder: function(addSubPath = '') {
     const filePath = data.editingPath() ? data.editingPath() : '';
     return addSubPath.length > 0
@@ -47,6 +48,7 @@ export var data = {
         // console.log("reading-", type, filename, reader);
         data.editingPath(file.path);
         data.editingType(type);
+        data.editingCode(null);
         data.loadData(reader.result, type, clearNodes);
       }
     };
@@ -95,6 +97,8 @@ export var data = {
     else if (filename.toLowerCase().indexOf('.tw2') > -1) return FILETYPE.TWEE2;
     else if (filename.toLowerCase().indexOf('.twee') > -1)
       return FILETYPE.TWEE2;
+    else if (filename.toLowerCase().indexOf('.dialogue') > -1)
+      return FILETYPE.STAXEL;
     return FILETYPE.UNKNOWN;
   },
 
@@ -110,7 +114,28 @@ export var data = {
         return;
       }
       for (i = 0; i < content.length; i++) objects.push(content[i]);
-    } else if (type == FILETYPE.YARN) {
+    }
+    else if (type == FILETYPE.STAXEL) {
+      content = JSON.parse(content);
+      if (!content) {
+        return;
+      }
+      data.editingCode(content.code);
+      for (i = 0; i < content.nodes.length; i++) {
+        var loadedObj = content.nodes[i];
+        var obj = {};
+        obj.title = loadedObj.title;
+        obj.position = loadedObj.position;
+        obj.colorID = loadedObj.colorID;
+        obj.tags = loadedObj.tags;
+        obj.body = '';
+        loadedObj.body.forEach(line => {
+          obj.body += line + '\n';
+        });
+        objects.push(obj);
+      }
+    }
+    else if (type == FILETYPE.YARN) {
       var lines = content.split(/\r?\n/);
       var obj = null;
       var index = 0;
@@ -282,7 +307,28 @@ export var data = {
 
     if (type == FILETYPE.JSON) {
       output = JSON.stringify(content, null, '\t');
-    } else if (type == FILETYPE.YARN) {
+    }
+    else if (type == FILETYPE.STAXEL){
+      var code = data.editingCode();
+      if(code == null)
+        code = 'staxel.villager.MISSINGCODE'
+      output += '{\n';
+      output += '    \"code\": \"' + code + '\",\n';
+      output += '    \"nodes\": ';
+      var outputContent = [];
+      content.forEach(node => {
+        var obj = {};
+        obj.title = node.title;
+        obj.position = node.position;
+        obj.colorID = node.colorID;
+        obj.tags = node.tags;
+        obj.body = node.body.split("\n");
+        outputContent.push(obj);
+      });
+      output += JSON.stringify(outputContent, null, 4);
+      output += '\n}';
+    }
+    else if (type == FILETYPE.YARN) {
       for (i = 0; i < content.length; i++) {
         output += 'title: ' + content[i].title + '\n';
         output += 'tags: ' + content[i].tags + '\n';
@@ -406,6 +452,7 @@ export var data = {
         data.editingPath(dropboxObject.link);
         data.editingType(type);
         data.editingName(dropboxObject.name.replace(/\.[^/.]+$/, ''));
+        data.editingCode(null);
         data.loadData(textData, type, true);
       }
     });

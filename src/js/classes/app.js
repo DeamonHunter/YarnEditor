@@ -623,6 +623,63 @@ export var App = function(name, version) {
       self.editor.focus();
     };
 
+    this.insertStaxelFormatTags = function (tag) {
+      var tagClose = '^' + tag.replace(/[\"#=:]/gi, '') + ':pop;';
+      if (tag === 'cmd') {
+        tag = '<<';
+        tagClose = '>>';
+      } else if (tag === 'opt') {
+        tag = '[[';
+        tagClose = '|]]';
+      }
+      else {
+        tag = '^' + tag + ';';
+      }
+
+      var selectRange = JSON.parse(
+        JSON.stringify(self.editor.selection.getRange())
+      );
+      self.editor.session.insert(selectRange.start, tag);
+      self.editor.session.insert(
+        {
+          column: selectRange.end.column + tag.length,
+          row: selectRange.end.row,
+        },
+        tagClose
+      );
+
+      if (tag === '^c:;') {
+        if (self.editor.getSelectedText().length === 0) {
+          self.moveEditCursor(-8);
+          self.insertColorCode();
+          return;
+        }
+        self.editor.selection.setRange({
+          start: {
+            row: self.editor.selection.getRange().start.row,
+            column: self.editor.selection.getRange().start.column - 1,
+          },
+          end: {
+            row: self.editor.selection.getRange().start.row,
+            column: self.editor.selection.getRange().start.column - 1,
+          },
+        });
+        self.insertColorCode();
+      } else if (self.editor.getSelectedText().length === 0) {
+        self.moveEditCursor(-tagClose.length);
+      } else {
+        self.editor.selection.setRange({
+          start: self.editor.selection.getRange().start,
+          end: {
+            row: self.editor.selection.getRange().end.row,
+            column:
+              self.editor.selection.getRange().end.column - tagClose.length,
+          },
+        });
+      }
+      self.editor.focus();
+    };
+
     this.insertEmoji = function() {
       this.emPicker.toggle();
       self.togglePreviewMode(true);

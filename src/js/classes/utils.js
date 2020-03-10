@@ -4,6 +4,7 @@ export var FILETYPE = {
   TWEE: 'twee',
   TWEE2: 'tw2',
   UNKNOWN: 'none',
+  STAXEL: 'dialogue',
   YARN: 'yarn'
 };
 

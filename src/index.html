@@ -17,7 +17,7 @@
 			<!-- search form -->
 			<div class="app-search">
 				<input id="nodeSearchInput" type="text" class="search-field" placeholder="Search"/>
-				
+
 				<span>
 						<span class="search-title styled-checkbox">
 								<input type="checkbox" checked="checked" id="search-title" />
@@ -90,6 +90,11 @@
 							&nbsp;
 							Save As Json
 						</span>
+						<span class="item" data-bind="click: function() { app.data.trySave('dialogue');}">
+							<img width="12px" src="./public/images/staxel.ico" alt="Staxel Icon" />
+							&nbsp;
+							Save As Staxel
+						</span>
 						<span class="item" data-bind="click: function() { app.data.trySave('yarn'); }">
 							<img width="12px" src="./public/icon.ico" alt="Yarn Icon" />
 							&nbsp;
@@ -132,8 +137,8 @@
 			</div>
 
 			<!-- ko if:app.editing() != null -->
-			<div class="node-editor" data-bind="mousedown:app.saveNode">				
-			
+			<div class="node-editor" data-bind="mousedown:app.saveNode">
+
 				<div class="form" data-bind="preventBubble: 'click', preventBubble: 'mousedown'">
 					<input type="text" id="editorTitle" class="title" oninput="app.validateTitle()" data-bind="value: app.editing().title;" onfocus="app.togglePreviewMode(true)" placeholder="Title">
 					<input type="text" data-bind="value: app.editing().tags;" onfocus="app.togglePreviewMode(true)" placeholder="Tags(use spaces)">
@@ -144,13 +149,13 @@
 						<button class="bbcode-button" onclick="app.insertBBcodeTags('b')" title="Bold"><b>B</b></button>
 						<button class="bbcode-button" onclick="app.insertBBcodeTags('u')" title="Underlined"><u>U</u></button>
 						<button class="bbcode-button" onclick="app.insertBBcodeTags('i')" title="Italic"><i>I</i></button>
-						<button class="bbcode-button" style="color:green" onclick="app.insertBBcodeTags('color=#')"><text color="pink" title="Color">🌈</text></button>
+						<button class="bbcode-button" style="color:green" onclick="app.insertStaxelFormatTags('c:')"><text color="pink" title="Color">🌈</text></button>
 						<button class="bbcode-button" style="color:#19a4a8" onclick="app.insertBBcodeTags('img')" title="Image">🦄</button>
 						<button class="bbcode-button" style="color:purple" onclick="app.insertBBcodeTags('cmd')" title="Command">🎮</button>
 						<span class="hide-when-narrow">
 							<button class="bbcode-button" style="color:#19a4a8" onclick="app.insertBBcodeTags('opt')" title="Choice/Link">❔</button>
-						</span> 
-						
+						</span>
+
 						<button class="bbcode-button" style="color:#19a4a8" onclick="app.insertEmoji()" title="Emoji">😉</button>
 
 						<div class="app-menu" style="position: absolute;">
@@ -216,19 +221,19 @@
 							<button class="bbcode-button" style="color:#19a4a8" onclick="app.editor.undo()" title="Undo">↶</button>
 							<button class="bbcode-button" style="color:#19a4a8" onclick="app.editor.redo()" title="Redo">↷</button>
 						</span>
-					 
+
 					</div>
 
 					<div class="editor-container">
 						<div class="editor-preview" id="editor-preview" onclick="app.togglePreviewMode(false)"></div>
 						<div class="editor" id="editor"
 						data-bind="
-						ace: app.editing().body, 
+						ace: app.editing().body,
 						aceOptions: { mode: 'yarn', theme: 'yarn', showPrintMargin: false,
 						enableBasicAutocompletion: true,
 						enableLiveAutocompletion: true }"
 						>
-						</div> 
+						</div>
 					</div>
 					<!--<div class="icon close" data-bind="click:app.saveNode"></div>-->
 
@@ -275,7 +280,7 @@
 		<!-- Hidden fields, file dialogs, and elements -->
 		<div class="hidden">
 			<input type="file" id="open-image" accept=".jpg,.jpeg,.png,.gif,.bmp"/>
-			<input type="file" id="open-file" accept=".yarn,.txt,.xml,.json,.twee,.tw2"/>
+			<input type="file" id="open-file" accept=".yarn,.txt,.xml,.json,.dialogue,.twee,.tw2"/>
 			<input type="file" id="open-folder" webkitdirectory directory/>
 			<input type="file" id="save-file" nwsaveas="filename.txt" />
 		</div>
