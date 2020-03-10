@@ -403,7 +403,10 @@ export var App = function(name, version) {
             case 83:
               if (data.editingPath() != null) {
                 data.trySaveCurrent();
-              } else {
+              } else if (data.editingType() != null){
+                data.trySave(data.editingType())
+              }
+              else {
                 data.trySave(FILETYPE.JSON);
               }
               self.fileKeyPressed = true;
