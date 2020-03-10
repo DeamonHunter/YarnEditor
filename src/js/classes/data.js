@@ -312,10 +312,9 @@ export var data = {
       var code = data.editingCode();
       if(code == null)
         code = 'staxel.villager.MISSINGCODE'
-      output += '{\n';
-      output += '    \"code\": \"' + code + '\",\n';
-      output += '    \"nodes\": ';
-      var outputContent = [];
+      var outputContent = {};
+      outputContent.code = code;
+      outputContent.nodes = [];
       content.forEach(node => {
         var obj = {};
         obj.title = node.title;
@@ -323,10 +322,9 @@ export var data = {
         obj.colorID = node.colorID;
         obj.tags = node.tags;
         obj.body = node.body.split("\n");
-        outputContent.push(obj);
+        outputContent.nodes.push(obj);
       });
       output += JSON.stringify(outputContent, null, 4);
-      output += '\n}';
     }
     else if (type == FILETYPE.YARN) {
       for (i = 0; i < content.length; i++) {
