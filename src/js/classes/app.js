@@ -382,10 +382,12 @@ export var App = function(name, version) {
             case 83:
               data.trySave(FILETYPE.JSON);
               self.fileKeyPressed = true;
+              e.preventDefault();
               break;
             case 65:
               data.tryAppend();
               self.fileKeyPressed = true;
+              e.preventDefault();
               break;
           }
         } else if (e.altKey) {
@@ -393,6 +395,7 @@ export var App = function(name, version) {
             case 83:
               data.trySave(FILETYPE.YARN);
               self.fileKeyPressed = true;
+              e.preventDefault();
               break;
           }
         } else {
@@ -404,10 +407,12 @@ export var App = function(name, version) {
                 data.trySave(FILETYPE.JSON);
               }
               self.fileKeyPressed = true;
+              e.preventDefault();
               break;
             case 79:
               data.tryOpenFile();
               self.fileKeyPressed = true;
+              e.preventDefault();
               break;
           }
         }
