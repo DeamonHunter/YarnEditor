@@ -7,44 +7,49 @@ const NodeExpandHeight = 150;
 const ClipNodeTextLength = 1024;
 const bbcode = require('bbcode');
 
-export var Node = function() {
+export var Node = function(options = {}) {
   var self = this;
-  this.titleColorValues = [
-    '#eee',
-    '#6EA5E0',
-    '#9EDE74',
-    '#FFE374',
-    '#F7A666',
-    '#C47862',
-    '#97E1E9'
+
+  this.titleStyles = [
+    'title-style-1',
+    'title-style-2',
+    'title-style-3',
+    'title-style-4',
+    'title-style-5',
+    'title-style-6',
+    'title-style-7',
+    'title-style-8',
+    'title-style-9',
   ];
+
   // primary values
   this.index = ko.observable(globalNodeIndex++);
-  this.title = ko.observable('Node' + this.index());
-  this.tags = ko.observable('');
-  this.body = ko.observable('Empty Text');
+  this.title = ko.observable(options.title || app.getUniqueTitle());
+  this.tags = ko.observable(options.tags || '');
+  this.body = ko.observable(options.body || 'Empty Text');
   //this.x = ko.observable(128);
   //this.y = ko.observable(128);
-  this.active = ko.observable(true);
-  this.tempWidth;
-  this.tempHeight;
-  this.tempOpacity;
-  this.style;
-  this.colorID = ko.observable(0);
+  this.active = ko.observable(options.active || true);
+  this.tempWidth = null;
+  this.tempHeight = null;
+  this.tempOpacity = null;
+  this.style = null;
+  this.colorID = ko.observable(options.colorID || 0);
   this.checked = false;
   this.selected = false;
-  this.createX = null;
-  this.createY = null;
+  this.createX = options.x || null;
+  this.createY = options.y || null;
 
-  // clipped values for display
+  // clippedTags
+  //
+  // Returns an array of tags objects with id, style and count
   this.clippedTags = ko.computed(function() {
-    var tags = this.tags().split(' ');
-    var output = '';
-    if (this.tags().length > 0) {
-      for (var i = 0; i < tags.length; i++)
-        output += '<span>' + tags[i] + '</span>';
-    }
-    return output;
+    return Utils
+      .uniqueSplit(self.tags(), ' ')
+      .map (
+        tag => app.tags().find (e => e.text === tag)
+      )
+      .filter (item => item);
   }, this);
 
   this.textToHtml = function(text, showRowNumbers = false) {
@@ -62,7 +67,7 @@ export var Node = function() {
     });
 
     /// Commands in preview mode
-    result = result.replace(/<</gi, "<font color='violet'>(run:");
+    result = result.replace(/<</gi, '<font color=\'violet\'>(run:');
     result = result.replace(/>>/gi, ')</font>');
 
     /// bbcode color tags in preview mode
@@ -135,7 +140,6 @@ export var Node = function() {
   this.canDoubleClick = true;
 
   this.create = function() {
-    Utils.pushToTop($(self.element));
     self.style = window.getComputedStyle($(self.element).get(0));
 
     if (self.createX && self.createY) {
@@ -147,7 +151,8 @@ export var Node = function() {
       self.y(-parent.offset().top + $(window).height() / 2 - 100);
     }
 
-    var updateArrowsInterval = setInterval(app.updateArrowsThrottled, 16);
+    app.workspace.bringToFront(self.element);
+    app.workspace.startUpdatingArrows();
 
     $(self.element)
       .css({ opacity: 0, scale: 0.8, y: '-=80px', rotate: '45deg' })
@@ -156,13 +161,13 @@ export var Node = function() {
           opacity: 1,
           scale: 1,
           y: '+=80px',
-          rotate: '0deg'
+          rotate: '0deg',
         },
         250,
         'easeInQuad',
         function() {
-          clearInterval(updateArrowsInterval);
-          app.updateArrowsThrottled();
+          app.workspace.stopUpdatingArrows();
+          app.workspace.updateArrows();
         }
       );
     self.drag();
@@ -177,8 +182,8 @@ export var Node = function() {
 
     $(self.element).on('click', function(e) {
       if (e.ctrlKey) {
-        if (self.selected) app.removeNodeSelection(self);
-        else app.addNodeSelected(self);
+        if (self.selected) app.workspace.removeNodesFromSelection(self);
+        else app.workspace.addNodesToSelection(self);
       }
     });
   };
@@ -186,8 +191,8 @@ export var Node = function() {
   this.setSelected = function(select) {
     self.selected = select;
 
-    if (self.selected) $(self.element).css({ border: '1px solid #49eff1' });
-    else $(self.element).css({ border: 'none' });
+    if (self.selected) $(self.element).addClass('selected');
+    else $(self.element).removeClass('selected');
   };
 
   this.toggleSelected = function() {
@@ -221,7 +226,7 @@ export var Node = function() {
     setTimeout(self.resetDoubleClick, 500);
     self.canDoubleClick = false;
 
-    if (app.shifted) app.matchConnectedColorID(self);
+    if (app.input.isShiftDown) app.matchConnectedColorID(self);
 
     if (self.selected) app.setSelectedColors(self);
   };
@@ -232,19 +237,19 @@ export var Node = function() {
     setTimeout(self.resetDoubleClick, 500);
     self.canDoubleClick = false;
 
-    if (app.shifted) app.matchConnectedColorID(self);
+    if (app.input.isShiftDown) app.matchConnectedColorID(self);
 
     if (self.selected) app.setSelectedColors(self);
   };
 
   this.doCycleColorDown = function() {
     self.colorID(self.colorID() - 1);
-    if (self.colorID() < 0) self.colorID(6);
+    if (self.colorID() < 0) self.colorID(8);
   };
 
   this.doCycleColorUp = function() {
     self.colorID(self.colorID() + 1);
-    if (self.colorID() > 6) self.colorID(0);
+    if (self.colorID() > 8) self.colorID(0);
   };
 
   this.remove = function() {
@@ -254,7 +259,7 @@ export var Node = function() {
       'easeInQuad',
       function() {
         app.removeNode(self);
-        app.updateArrowsThrottled();
+        app.workspace.updateArrows();
       }
     );
     app.deleting(null);
@@ -263,19 +268,16 @@ export var Node = function() {
   this.drag = function() {
     var dragging = false;
     var groupDragging = false;
-
     var offset = [0, 0];
-    var moved = false;
 
     $(document.body).on('mousemove touchmove', function(e) {
       if (dragging) {
-        var parent = $(self.element).parent();
         const pageX =
-          app.hasTouchScreen && e.changedTouches
+          app.input.isScreenTouched && e.changedTouches
             ? e.changedTouches[0].pageX
             : e.pageX;
         const pageY =
-          app.hasTouchScreen && e.changedTouches
+          app.input.isScreenTouched && e.changedTouches
             ? e.changedTouches[0].pageY
             : e.pageY;
 
@@ -284,14 +286,13 @@ export var Node = function() {
         var movedX = newX - self.x();
         var movedY = newY - self.y();
 
-        moved = true;
         self.x(newX);
         self.y(newY);
 
         if (groupDragging) {
           var nodes = [];
           if (self.selected) {
-            nodes = app.getSelectedNodes();
+            nodes = app.workspace.getSelectedNodes();
             nodes.splice(nodes.indexOf(self), 1);
           } else {
             nodes = app.getNodesConnectedTo(self);
@@ -305,8 +306,7 @@ export var Node = function() {
           }
         }
 
-        //app.refresh();
-        app.updateArrowsThrottled();
+        app.workspace.updateArrows();
       }
     });
 
@@ -316,7 +316,7 @@ export var Node = function() {
 
         dragging = true;
 
-        if (app.shifted || self.selected) {
+        if (app.input.isShiftDown || self.selected) {
           groupDragging = true;
         }
 
@@ -329,32 +329,22 @@ export var Node = function() {
       e.stopPropagation();
     });
 
-    $(self.element).on('pointerup', function(e) {
-      if (!moved) app.mouseUpOnNodeNotMoved();
-      moved = false;
-    });
-
-    $(document.body).on('pointerup touchend', function(e) {
+    $(self.element).on('pointerup touchend', function(e) {
       dragging = false;
       groupDragging = false;
-      moved = false;
-
-      if (app.hasTouchScreen) {
-        app.deselectAllNodes();
-      }
-
-      app.updateArrowsThrottled();
     });
   };
 
   this.moveTo = function(newX, newY) {
+    app.workspace.startUpdatingArrows();
+
     $(self.element).clearQueue();
     $(self.element).transition(
       {
         x: newX,
-        y: newY
+        y: newY,
       },
-      app.updateArrowsThrottled,
+      app.stopUpdatingArrows,
       500
     );
   };
@@ -372,9 +362,8 @@ export var Node = function() {
     return false;
   };
 
-  this.getLinksInNode = function() {
-    // find all the links
-    var links = self.body().match(/\[\[(.*?)\]\]/g);
+  this.getLinksInNode = function(node) {
+    var links = (node || self).body().match(/\[\[(.*?)\]\]/g);
 
     if (links != undefined) {
       var exists = {};
@@ -398,20 +387,45 @@ export var Node = function() {
 
   this.updateLinks = function() {
     self.resetDoubleClick();
-    // clear existing links
+    self.updateLinksFromParents();
+    self.updateLinksToChildren();
+  };
+
+  this.updateLinksFromParents = function() {
+    // If title didn't change there's nothing we need to update on parents
+    if (!self.oldTitle || self.oldTitle === self.title()) {
+      return;
+    }
+
+    self.linkedFrom.removeAll();
+
+    app.nodes().forEach(parent => {
+      var parentLinks = self.getLinksInNode(parent);
+      if (parentLinks && parentLinks.includes(self.oldTitle)) {
+        var re = RegExp('\\|\\s*' + self.oldTitle + '\\s*\\]\\]', 'g');
+        var newBody = parent.body().replace(re, '|' + self.title() + ']]');
+        parent.body(newBody);
+        self.linkedFrom.push(parent);
+      }
+    });
+
+    self.oldTitle = undefined;
+  };
+
+  this.updateLinksToChildren = function() {
     self.linkedTo.removeAll();
-    // find all the links
+
     var links = self.getLinksInNode();
 
-    if (links != undefined) {
-      // update links
-      for (var index in app.nodes()) {
-        var other = app.nodes()[index];
-        for (var i = 0; i < links.length; i++) {
-          // if (other != self && other.title().toLowerCase() == links[i])
-          if (other != self && other.title().trim() == links[i].trim()) {
-            self.linkedTo.push(other);
-          }
+    if (!links) {
+      return;
+    }
+
+    for (var index in app.nodes()) {
+      var other = app.nodes()[index];
+      for (var i = 0; i < links.length; i++) {
+        if (other != self && other.title().trim() === links[i].trim()) {
+          self.linkedTo.push(other);
         }
       }
     }
@@ -446,7 +460,7 @@ ko.bindingHandlers.nodeBind = {
     bindingContext
   ) {
     $(element).on('pointerdown', function() {
-      Utils.pushToTop($(element));
+      app.workspace.bringToFront(element);
     });
-  }
+  },
 };

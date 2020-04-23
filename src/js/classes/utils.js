@@ -5,7 +5,7 @@ export var FILETYPE = {
   TWEE2: 'tw2',
   UNKNOWN: 'none',
   STAXEL: 'dialogue',
-  YARN: 'yarn'
+  YARN: 'yarn',
 };
 
 export var Utils = {
@@ -31,13 +31,14 @@ export var Utils = {
             return {
               caption: word,
               value: word,
-              meta: meta
+              meta: meta,
             };
           })
         );
-      }
+      },
     };
   },
+
   addDoubleTapDetector: function(element, callback) {
     element.lastTap = 0;
     element.tapTimeout = 0;
@@ -59,28 +60,24 @@ export var Utils = {
       element.lastTap = currentTime;
     });
   },
-  pushToTop: function(element) {
-    var current = element.css('z-index');
-    if (current == 'auto') current = 0;
 
-    var highZ = parseInt(current);
-    var above = true;
-    element
-      .parent()
-      .children()
-      .each(function() {
-        var otherCurrent = $(this).css('z-index');
-        if (otherCurrent == 'auto') otherCurrent = 0;
-        var other = parseInt(otherCurrent);
+  uniqueSplit: function(str, separator = ' ') {
+    return [...(new Set(str.split(separator).filter(item => item)))];
+  },
 
-        if (this != element[0]) {
-          if (other >= highZ) {
-            highZ = other;
-            above = false;
-          }
-        }
-      });
-    if (!above) element.css('z-index', highZ + 1);
+  getHighestZ: function(container) {
+    let highestZ = Number.NEGATIVE_INFINITY;
+    $(container).children().each(function() {
+      let z = parseInt($(this).css('z-index')) || 0;
+      if (z > highestZ) {
+        highestZ = z;
+      }
+    });
+    return highestZ;
+  },
+
+  clamp: function(value, min, max) {
+    return Math.max(Math.min(value, max), min);
   },
 
   stripHtml: function(html) {
@@ -124,59 +121,14 @@ export var Utils = {
         }
       }
     }
-    console.log(nodes);
 
     return nodes;
   },
-
   now:
     Date.now ||
     function() {
       return new Date().getTime();
     },
-
-  throttle: function(func, wait, options) {
-    var self = this;
-    var context, args, result;
-    var timeout = null;
-    var previous = 0;
-
-    if (!options) options = {};
-
-    var later = function() {
-      previous = options.leading === false ? 0 : self.now();
-      timeout = null;
-      result = func.apply(context, args);
-      if (!timeout) context = args = null;
-    };
-
-    return function() {
-      var now = self.now();
-
-      if (!previous && options.leading === false) previous = now;
-
-      var remaining = wait - (now - previous);
-
-      context = this;
-      args = arguments;
-
-      if (remaining <= 0 || remaining > wait) {
-        if (timeout) {
-          clearTimeout(timeout);
-          timeout = null;
-        }
-
-        previous = now;
-        result = func.apply(context, args);
-
-        if (!timeout) context = args = null;
-      } else if (!timeout && options.trailing !== false) {
-        timeout = setTimeout(later, remaining);
-      }
-
-      return result;
-    };
-  },
   langs: [
     ['Afrikaans', ['af-ZA']],
     ['Bahasa Indonesia', ['id-ID']],
@@ -192,7 +144,7 @@ export var Utils = {
       ['en-NZ', 'New Zealand'],
       ['en-ZA', 'South Africa'],
       ['en-GB', 'United Kingdom'],
-      ['en-US', 'United States']
+      ['en-US', 'United States'],
     ],
     [
       'Español',
@@ -215,7 +167,7 @@ export var Utils = {
       ['es-PR', 'Puerto Rico'],
       ['es-DO', 'República Dominicana'],
       ['es-UY', 'Uruguay'],
-      ['es-VE', 'Venezuela']
+      ['es-VE', 'Venezuela'],
     ],
     ['Euskara', ['eu-ES']],
     ['Français', ['fr-FR']],
@@ -243,12 +195,13 @@ export var Utils = {
       ['cmn-Hans-CN', '普通话 (中国大陆)'],
       ['cmn-Hans-HK', '普通话 (香港)'],
       ['cmn-Hant-TW', '中文 (台灣)'],
-      ['yue-Hant-HK', '粵語 (香港)']
+      ['yue-Hant-HK', '粵語 (香港)'],
     ],
     ['日本語', ['ja-JP']],
-    ['Lingua latīna', ['la']]
+    ['Lingua latīna', ['la']],
   ],
   createDropboxChooser: function(dropboxButton, onSuccess) {
+    if (!dropboxButton) return;
     var options = {
       success: function(files) {
         files.forEach(function(file) {
@@ -259,7 +212,7 @@ export var Utils = {
         //optional
       },
       linkType: 'direct', // "preview" or "direct"
-      multiselect: false // true or false
+      multiselect: false, // true or false
     };
 
     var button = Dropbox.createChooseButton(options);
@@ -279,5 +232,5 @@ export var Utils = {
       'data:text/plain;charset=utf-11,' + encodeURIComponent(text);
     // returns the url of the created text file
     return appTextfile;
-  }
+  },
 };

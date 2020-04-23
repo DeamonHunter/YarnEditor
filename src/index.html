@@ -5,7 +5,7 @@
 		<link rel="manifest" href="./manifest.json" >
 
 		<title>Yarn</title>
-	<script type="text/javascript" src="https://www.dropbox.com/static/api/2/dropins.js" id="dropboxjs" data-app-key="8gmp2fm55zkop6h"></script>
+	<!-- <script type="text/javascript" src="https://www.dropbox.com/static/api/2/dropins.js" id="dropboxjs" data-app-key="8gmp2fm55zkop6h"></script> -->
 	</head>
 	<body>
 		<!-- Fancy Background -->
@@ -36,10 +36,10 @@
 
 			<!-- zoom controls -->
 			<div class="app-sort hide-when-narrow">
-				<span data-bind="click: app.arrangeX" title="Arrange H"></span>
-				<span data-bind="click: app.arrangeY" title="Arrange V"></span>
-				<span data-bind="click: app.arrangeSpiral" title="Arrange Spiral"></span>
-				<span data-bind="click: app.sortAlphabetical" title="Sort Alphabetically" ></span>
+				<span data-bind="click: app.workspace.alignX" title="Arrange H"></span>
+				<span data-bind="click: app.workspace.alignY" title="Arrange V"></span>
+				<span data-bind="click: app.workspace.arrangeSpiral" title="Arrange Spiral"></span>
+				<span data-bind="click: app.workspace.sortAlphabetical" title="Sort Alphabetically" ></span>
 			</div>
 
 			<div class="app-undo-redo">
@@ -78,12 +78,12 @@
 						<span class="item" data-bind="click: app.data.trySaveCurrent">Save</span>
 						<!-- /ko -->
 						<span id="dropboxIO">
-						<div id="dropbox-container" class="item"></div>
-						<span class="item" data-bind="click: function() { app.data.trySaveDropbox();}">
+						<!-- <div id="dropbox-container" class="item"></div> -->
+						<!-- <span class="item" data-bind="click: function() { app.data.trySaveDropbox();}">
 							<img width="12px" src="./public/images/dropbox.ico" alt="Dropbox Icon" />
 							&nbsp;
 							Save to dropbox
-						</span>
+						</span> -->
 						</span>
 						<span class="item" data-bind="click: function() { app.data.trySave('json');}">
 							<img width="12px" src="./public/icon.ico" alt="Staxel Icon" />
@@ -122,10 +122,11 @@
 			<div class="nodes">
 				<div class="nodes-holder" data-bind="foreach: { data: app.nodes, as: 'node' }">
 					<div class="node" data-bind="nodeBind: true, css: { inactive: !node.active()}" >
-						<div class="title" data-bind="text: node.title, style: {background:
-						node.titleColorValues[node.colorID()]}"></div>
+						<div class="title" data-bind="text: node.title, css: 'title ' + node.titleStyles[node.colorID()]"></div>
 						<div class="body" data-bind="html: node.clippedBody"></div>
-						<div class="tags" data-bind="html: node.clippedTags"></div>
+						<div class="tags" data-bind="visible:node.clippedTags, foreach: { data: node.clippedTags, as: 'tag' }">
+							<span data-bind="text: tag.text, css: tag.style"></span>
+						</div>
 						<div class="icon colorDown" data-bind="click: node.cycleColorDown"></div>
 						<div class="icon colorUp" data-bind="click: node.cycleColorUp"></div>
 						<!--<div class="icon edit" data-bind="click: function() { app.editNode(node); }"></div>-->
@@ -213,7 +214,8 @@
 							<input class="styled-checkbox" type="checkbox" id="toglTranscribing" onclick="app.toglTranscribing()"></input>
 							<label for="toglTranscribing" title="Transcribe"><span title="Transcribe" class="button-bubble" id="speakTextBtnBubble"></span>🎤</label>
 						</span>
-						<button  class="bbcode-button" style="color:#19a4a8" onclick="app.speakText()" title="Hear text">🔊</button>
+						<button class="bbcode-button" style="color:#19a4a8" onclick="app.speakText()" title="Hear text">🔊</button>
+						<button id="storyPlayButton" class="bbcode-button" style="color:#19a4a8" onclick="app.togglePlayMode(true)" title="Preview">▶️</button>
 
 						<span class="show-when-narrow">
 							|
@@ -224,7 +226,11 @@
 					</div>
 
 					<div class="editor-container">
-						<div class="editor-preview" id="editor-preview" onclick="app.togglePreviewMode(false)"></div>
+						<div class="editor-preview" id="editor-preview" onclick="app.togglePreviewMode(false)" ></div>
+						<div class="editor-play" id="editor-play" onpointermove="app.advanceStoryPlayMode(30)" ondblclick="app.advanceStoryPlayMode()">
+							<p id="NVrichTextLabel"></p>
+							<div id="commandDebugLabel"></div>
+						</div>
 						<div class="editor" id="editor"
 						data-bind="
 						ace: app.editing().body,
@@ -270,6 +276,7 @@
 			<div class="app-info">
 				<span class="app-title" data-bind="text:app.name"></span>
 				<span class="app-version" data-bind="text:app.version"></span>
+				<span class="title" id="addPwa">Add to Homescreen</span>
 			</div>
 
 			<!-- marquee -->

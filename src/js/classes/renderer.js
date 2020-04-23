@@ -1,31 +1,31 @@
-const bondage = require("bondage");
-const bbcode = require("bbcode");
+const bondage = require('bondage');
+const bbcode = require('bbcode');
 const yarnRunner = new bondage.Runner();
-const EventEmitter = require("events").EventEmitter;
+const EventEmitter = require('events').EventEmitter;
 // const path = require('path')
 // const fs = require('fs');
 
 export var yarnRender = function() {
   let visitedNodes = [];
   this.visitedNodes = visitedNodes; // collects titles of ALL visited nodes
-  let node = {};
+  let node = { title: '' };
   this.node = node; // gets raw data from yarn text nodes
   let emiter = new EventEmitter();
   this.emiter = emiter;
   let commandsPassedLog = [];
   this.commandsPassedLog = commandsPassedLog;
-  let commandPassed = "";
+  let commandPassed = '';
   this.commandPassed = commandPassed;
-  let finished = null;
+  let finished = true;
   this.finished = finished;
 
   this.visitedChapters = []; // to keep track of all visited start chapters
   this.self = this;
-  this.vnChoiceSelectionCursor = ">";
+  this.vnChoiceSelectionCursor = '>';
   this.startTimeWait;
   this.vnSelectedChoice = -1;
   this.vnTextScrollInterval;
-  this.storyChapter = ""; // current chapter choices
+  this.storyChapter = ''; // current chapter choices
   this.choices = {}; // all choices from all start chapters
 
   let vnChoices,
@@ -35,7 +35,26 @@ export var yarnRender = function() {
     VNdata,
     vnTextScroll,
     htmIDtoAttachYarnTo,
+    debugLabelIdToAttachTo,
     vnTextScrollIdx = null;
+
+  this.vnSelectChoice = () => {
+    let endTimeWait = new Date().getTime();
+    if (endTimeWait - this.startTimeWait < 1000) {
+      return;
+    } // we need to wait for user to see the questions
+    this.choices[this.storyChapter].push(
+      vnResult.options[this.vnSelectedChoice]
+    );
+    vnResult.select(this.vnSelectedChoice);
+    this.emiter.emit('choiceMade', vnResult.options[this.vnSelectedChoice]);
+    vnText = '';
+    vnChoices = undefined;
+    vnResult = self.goToNext();
+    this.vnSelectedChoice = -1;
+    this.changeTextScrollSpeed(111);
+  };
+
   this.vnUpdateChoice = (direction = 0) => {
     // direction: -1 or 1
     if (this.vnSelectedChoice < 0) {
@@ -48,34 +67,28 @@ export var yarnRender = function() {
       attemptChoice = vnResult.options.length - 1;
     }
     this.vnSelectedChoice = attemptChoice;
-    vnChoices = "";
+    vnChoices = document.createElement('DIV');
     vnResult.options.forEach((choice, i) => {
-      vnChoices += "\n ";
+      const btn = document.createElement('DIV');
       if (i == this.vnSelectedChoice) {
-        vnChoices += this.vnChoiceSelectionCursor;
+        btn.innerHTML = `${this.vnChoiceSelectionCursor} [${choice}]`; 
       } else {
-        vnChoices += "   ";
+        btn.innerHTML = `${this.vnChoiceSelectionCursor.replace(/.*/gm, '&nbsp;')} [${choice}]`; 
       }
-      vnChoices += " [" + choice + "] ";
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        this.vnSelectedChoice = i;
+        this.vnUpdateChoice();
+      };
+      btn.ondblclick = (e) => {
+        e.stopPropagation();
+        this.vnSelectedChoice = i;
+        this.vnSelectChoice();
+      };
+      btn.className = 'storyPreviewChoiceButton';
+      vnChoices.appendChild(btn);
     });
     self.updateVNHud();
-  };
-
-  this.vnSelectChoice = () => {
-    let endTimeWait = new Date().getTime();
-    if (endTimeWait - this.startTimeWait < 1000) {
-      return;
-    } // we need to wait for user to see the questions
-    this.choices[this.storyChapter].push(
-      vnResult.options[this.vnSelectedChoice]
-    );
-    vnResult.select(this.vnSelectedChoice);
-    this.emiter.emit("choiceMade", vnResult.options[this.vnSelectedChoice]);
-    vnText = "";
-    vnChoices = "";
-    vnResult = self.goToNext();
-    this.vnSelectedChoice = -1;
-    this.changeTextScrollSpeed(111);
   };
 
   // this function is triggered on key press/release
@@ -90,16 +103,16 @@ export var yarnRender = function() {
     if (vnTextScrollIdx < 0) {
       // when below 0, its on standby for input to continue
       if (this.isFinishedParsing(vnResult)) {
-        emiter.emit("finished");
+        emiter.emit('finished');
         return;
       }
-      if (vnResult.constructor.name === "TextResult") {
+      if (vnResult.constructor.name === 'TextResult') {
         vnText = vnResult.text;
         vnTextScrollIdx = 0;
         this.changeTextScrollSpeed(220);
         return;
       }
-      if (vnResult.constructor.name === "OptionsResult") {
+      if (vnResult.constructor.name === 'OptionsResult') {
         // Add choices to text
         if (this.vnSelectedChoice === -1) {
           this.vnSelectedChoice = 0;
@@ -117,7 +130,7 @@ export var yarnRender = function() {
   self.goToNext = () => {
     const nextNode = VNdata.next().value;
     if (!this.isFinishedParsing(nextNode)) {
-      if (nextNode.constructor.name === "TextResult") {
+      if (nextNode.constructor.name === 'TextResult') {
         /// bbcode local images with path relative to the resourcesPath specified on init
         // if (this.resourcesPath.length) {
         // 	const resourcesPath = this.resourcesPath;
@@ -136,9 +149,11 @@ export var yarnRender = function() {
         // }
         /// emit debug signal
         if (nextNode.data && this.node.title !== nextNode.data.title) {
+          vnText = '';
+          vnTextScrollIdx = -1;
           this.node = self.jsonCopy(nextNode.data);
           this.visitedNodes.push(nextNode.data.title);
-          this.emiter.emit("startedNode", this.node);
+          this.emiter.emit('startedNode', this.node);
         }
       }
       return nextNode;
@@ -159,17 +174,19 @@ export var yarnRender = function() {
   };
 
   this.runCommand = () => {
-    emiter.emit("commandCall", vnResult.text);
+    emiter.emit('commandCall', vnResult.text);
     commandsPassedLog.push(vnResult.text);
-    commandsPassed = vnResult.text;
 
     vnResult = self.goToNext();
     if (this.isFinishedParsing(vnResult)) {
       return;
     }
-    if (vnResult.constructor.name === "TextResult") {
-      vnText += "<br>" + vnResult.text;
-      this.changeTextScrollSpeed(111);
+    if (vnResult.constructor.name === 'TextResult') {
+      vnText += '\n' + vnResult.text;
+      // this.changeTextScrollSpeed(111);
+    }
+    if (vnResult.constructor.name === 'OptionsResult') {
+      vnTextScrollIdx = -1;
     }
   };
 
@@ -178,26 +195,24 @@ export var yarnRender = function() {
       return;
     }
     if (vnTextScrollIdx < 0) {
-      if (vnResult.constructor.name === "CommandResult") {
+      if (vnResult.constructor.name === 'CommandResult') {
         this.runCommand();
       }
     } else if (vnTextScrollIdx > vnText.length) {
-      if (vnResult.constructor.name === "TextResult") {
+      if (vnResult.constructor.name === 'TextResult') {
         vnResult = self.goToNext();
         if (this.isFinishedParsing(vnResult)) {
           return;
         }
-        if (vnResult.constructor.name === "CommandResult") {
+        if (vnResult.constructor.name === 'CommandResult') {
           this.runCommand();
-        } else if (vnResult.constructor.name === "TextResult") {
+        } else if (vnResult.constructor.name === 'TextResult') {
           vnTextScrollIdx = -1;
-        } else if (vnResult.constructor.name === "OptionsResult") {
+        } else if (vnResult.constructor.name === 'OptionsResult') {
           vnTextScrollIdx = -1;
         }
-      } else if (vnResult.constructor.name === "CommandResult") {
-        this.runCommand();
       }
-    } else if (vnResult.constructor.name === "TextResult") {
+    } else if (vnResult.constructor.name === 'TextResult') {
       // update text
       vnTextScrollIdx += 1;
       vnTextResult = vnText.substring(0, vnTextScrollIdx);
@@ -207,47 +222,87 @@ export var yarnRender = function() {
 
   // trigger this only on text update
   self.updateVNHud = () => {
-    let bbcodeHtml = vnTextResult;
-    if (vnResult.constructor.name === "TextResult") {
+    if (vnResult.constructor.name === 'TextResult') {
       while (
-        vnTextResult.lastIndexOf("[img]") > vnTextResult.lastIndexOf("[/img]")
+        vnTextResult.lastIndexOf('[img]') > vnTextResult.lastIndexOf('[/img]')
       ) {
         vnTextScrollIdx += 1;
         vnTextResult = vnText.substring(0, vnTextScrollIdx);
       }
-      while (vnTextResult.lastIndexOf("[") > vnTextResult.lastIndexOf("]")) {
+      while (vnTextResult.lastIndexOf('[') > vnTextResult.lastIndexOf(']')) {
         vnTextScrollIdx += 1;
         vnTextResult = vnText.substring(0, vnTextScrollIdx);
       }
     }
-    let RenderHtml =
-      "<div style ='color: white; width:90%;position:fixed;bottom:10px;padding:10px;font:50px arial,calibri;border-radius: 25px;border: 3px solid #73AD21 ;background:rgba(1,1,1,0.5)'>";
-    RenderHtml += bbcode.parse(vnTextResult) + "<br>";
+    document.getElementById(htmIDtoAttachYarnTo).innerHTML = bbcode.parse(vnTextResult) + '<br>';
     if (vnChoices !== undefined) {
-      RenderHtml +=
-        "<p style='padding:20px;font:30px arial,calibri'>" + vnChoices + "</p>";
+      document.getElementById(htmIDtoAttachYarnTo).appendChild(vnChoices);
     }
-    RenderHtml += "</div>";
-    document.getElementById(htmIDtoAttachYarnTo).innerHTML = RenderHtml;
   };
 
   this.terminate = () => {
-    document.getElementById(htmIDtoAttachYarnTo).innerHTML = "";
-    VNdata = null;
-    vnResult = null;
-    finished = false;
+    try {
+      document.getElementById(htmIDtoAttachYarnTo).innerHTML = '';
+      document.getElementById(debugLabelIdToAttachTo).innerHTML = '';
+      vnChoices = undefined;
+      
+      emiter.removeAllListeners();
+      this.finished = true;
+    } catch(e) {
+      console.warn(e);
+    }
   };
 
   this.initYarn = (
     yarnDataObject,
     startChapter,
     htmlIdToAttachTo,
-    resourcesPath
+    resourcesPath,
+    debugLabelId
   ) => {
+    const randomColour = ['#f5ff6f', '#44fe66', '#e00ec0', '#e93ecf', '#0ec0e0', '#3ecfe9', '#e4dbcb', '#978e7e', '#666', '#2f919a', 'deeppink', 'black', '#97E1E9', '#576574', '#6EA5E0', '#9EDE74', '#FFE374', '#F7A666', '#C47862'];
+    const randomAscii = ['__̴ı̴̴̡̡̡ ̡͌l̡̡̡ ̡͌l̡*̡̡ ̴̡ı̴̴̡ ̡̡͡| ̲▫̲͡ ̲̲͡▫̲̲͡͡ ̲|̡̡̡ ̡, ̴̡ı̴̡̡ ̡͌l̡̡̡̡.___', '°º¤ø,¸¸,ø¤º°`°º¤ø,¸,ø¤°º¤ø,¸¸,ø¤º°`°º¤ø,¸', '(===||:::::::::::::::>',
+      '¸.·´¯`·.´¯`·.¸¸.·´¯`·.¸><(((º>', '=^..^=', '|==|iiii|>-----', ' ¦̵̱ ̵̱ ̵̱ ̵̱ ̵̱(̢ ̡͇̅└͇̅┘͇̅ (▤8כ−◦', '(♥_♥)', '龴ↀ◡ↀ龴', '☁ ▅▒░☼‿☼░▒▅ ☁,',
+      '▓⚗_⚗▓', '<:3 )~~~', '(╯°□°）╯︵ ┻━┻', '●▬▬▬▬๑۩۩๑▬▬▬▬▬●', '(\/)(Ö,,,,Ö)(\/)', '/)^3^(\\', '( . Y . )',
+      '< )))) ><', '(ノಠ益ಠ)ノ彡', 'd(^o^)b¸¸♬·¯·♩¸¸♪·¯·♫¸¸', 'O=(\'-\'Q)', '-`ღ´-', 'ˁ(⦿ᴥ⦿)ˀ', '(╥﹏╥)', '✲´*。.❄¨¯`*✲。❄。*。¨¯`*✲',
+      '▂▃▅▇█▓▒░۩۞۩        ۩۞۩░▒▓█▇▅▃▂', '( •_•)O*¯`·.¸.·´¯`°Q(•_• )', '┻━┻︵  \(°□°)/ ︵ ┻━┻', '|̲̲̲͡͡͡ ̲▫̲͡ ̲̲̲͡͡π̲̲͡͡ ̲̲͡▫̲̲͡͡ ̲|̡̡̡ ̡ ̴̡ı̴̡̡ ̡͌l̡ ̴̡ı̴̴̡ ̡l̡*̡̡ ̴̡ı̴̴̡ ̡̡͡|̲̲̲͡͡͡ ̲▫̲͡ ̲̲̲͡͡π̲̲͡͡ ̲̲͡▫̲̲͡͡ |',
+      '❤◦.¸¸.  ◦✿', 'ʕʘ̅͜ʘ̅ʔ', '( ๏ Y ๏ )', 'ʕ•̫͡•ʕ*̫͡*ʕ•͓͡•ʔ-̫͡-ʕ•̫͡•ʔ*̫͡*ʔ-̫͡-ʔ', '(っ◕‿◕)っ', '❚█══█❚', '─=≡Σ((( つ◕ل͜◕)つ', '^ↀᴥↀ^',
+      '༼ つ ͡◕ Ѿ ͡◕ ༽つ', 'ᕦ(ò_óˇ)ᕤ',  '┬┴┬┴┤ ͜ʖ ͡°) ├┬┴┬┴', '[̲̅$̲̅(̲̅5)̲̅$̲̅]', '(ꈍ⌓ꈍ✿)', '(๑•́ ₃ •̀๑) ♡', '( • )( • )ԅ(≖⌣≖ԅ)', '（。々°）',
+      '⊂(´･◡･⊂ )∘˚˳°', '( ㅅ )', '(ﾉ☉ヮ⚆)ﾉ ⌒*:･ﾟ✧', '(－‸ლ)', '(‿|‿)', '(㇏(•̀ᵥᵥ•́)ノ)', 'ʚ✟⃛ɞ',  '(′ꈍωꈍ‵)', '♚ ♛ ♜ ♝ ♞ ♟ ♔ ♕ ♖ ♗ ♘ ♙',
+      '(´ᴗ`)(´ᴗ`)', '♥(´∀｀)', 'ฅ(˵●ﻌ●˵)ฅ'
+    ];
+    debugLabelIdToAttachTo = debugLabelId;
     htmIDtoAttachYarnTo = htmlIdToAttachTo;
     this.yarnDataObject = yarnDataObject;
     this.startChapter = startChapter;
     this.resourcesPath = resourcesPath;
+    this.finished = false;
+    document.getElementById(debugLabelIdToAttachTo).innerHTML =
+      '<br/><font color=\'red\'>🚥Press/Hold Z or 📱Double-click/Tap to advance</font><br/>';
+    emiter.on('startedNode', function(nodeData) {
+      document.getElementById(debugLabelIdToAttachTo).innerHTML +=
+        '<br/><br/><font color=\'#581845\'>📜 --- Loaded next node ---</font>';
+      document.getElementById(debugLabelIdToAttachTo).innerHTML +=
+        `<font color='${randomColour[Math.floor(Math.random() * randomColour.length)]}'>  ${randomAscii[Math.floor(Math.random() * randomAscii.length)]}</font>`;
+      document.getElementById(debugLabelIdToAttachTo).innerHTML +=
+        '<br/><font color=\'CADETBLUE\'>&ensp;&ensp;&ensp;Title: ' + nodeData.title + '</font>';
+      if (nodeData.tags.length > 0 && nodeData.tags[0].length > 0)
+        document.getElementById(debugLabelIdToAttachTo).innerHTML +=
+          '<br/><font color=\'deeppink\'>&ensp;&ensp;&ensp;Tags: ' + nodeData.tags + '</font>';
+    });
+    emiter.on('choiceMade', function(choice) {
+      document.getElementById(debugLabelIdToAttachTo).innerHTML +=
+        '<br/><font color=\'fuchsia\'>🐙Player chose: >' + choice + '</font>';
+    });
+    emiter.on('commandCall', function(call) {
+      document.getElementById(debugLabelIdToAttachTo).innerHTML +=
+        `<br/><font color='green'>🐣Command call:</font> <font color='red'>&lt;&lt;${call}&gt;&gt;</font>`;
+    });
+    emiter.on('finished', function() {
+      finished = true;
+      emiter.removeAllListeners();
+    });
+
     yarnRunner.load(yarnDataObject);
     this.loadYarnChapter(startChapter);
   };
