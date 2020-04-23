@@ -87,7 +87,8 @@ export var data = {
   getFileType: function(filename) {
     var clone = filename;
 
-    if (filename.toLowerCase().indexOf('.json') > -1) return FILETYPE.JSON;
+    if (filename.toLowerCase().indexOf('.json') > -1)
+      return FILETYPE.JSON;
     else if (filename.toLowerCase().indexOf('.yarn.txt') > -1)
       return FILETYPE.YARN;
     else if (filename.toLowerCase().indexOf('.yarn') > -1)
@@ -113,7 +114,23 @@ export var data = {
       if (!content) {
         return;
       }
-      for (i = 0; i < content.length; i++) objects.push(content[i]);
+      for (i = 0; i < content.length; i++) {
+        var loadedObj = content[i];
+        var obj = {};
+        obj.title = loadedObj.title;
+        obj.position = loadedObj.position;
+        obj.colorID = loadedObj.colorID;
+        obj.tags = loadedObj.tags;
+        obj.body = '';
+        if (loadedObj.body.isArray()) {
+          loadedObj.body.forEach(line => {
+            obj.body += line + '\n';
+          });
+        }
+        else
+          obj.body = loadedObj.body;
+        objects.push(obj);
+      }
     }
     else if (type == FILETYPE.STAXEL) {
       content = JSON.parse(content);
@@ -306,7 +323,16 @@ export var data = {
     }
 
     if (type == FILETYPE.JSON) {
-      output = JSON.stringify(content, null, '\t');
+      content.forEach(node => {
+        var obj = {};
+        obj.title = node.title;
+        obj.position = node.position;
+        obj.colorID = node.colorID;
+        obj.tags = node.tags;
+        obj.body = node.body.split("\n");
+        outputContent.nodes.push(obj);
+      });
+      output += JSON.stringify(outputContent, null, 4);
     }
     else if (type == FILETYPE.STAXEL){
       var code = data.editingCode();
