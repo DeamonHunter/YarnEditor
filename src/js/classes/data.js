@@ -94,7 +94,6 @@ export var data = {
     else if (lowerFileName.endsWith('.txt')) return FILETYPE.TWEE;
     else if (lowerFileName.endsWith('.tw2')) return FILETYPE.TWEE2;
     else if (lowerFileName.endsWith('.twee')) return FILETYPE.TWEE2;
-
     else if (filename.toLowerCase().indexOf('.dialogue') > -1) return FILETYPE.STAXEL;
     return FILETYPE.UNKNOWN;
   },
@@ -115,7 +114,7 @@ export var data = {
         obj.colorID = loadedObj.colorID;
         obj.tags = loadedObj.tags;
         obj.body = '';
-        if (loadedObj.body.isArray()) {
+        if (Array.isArray(loadedObj.body)) {
           loadedObj.body.forEach(line => {
             obj.body += line + '\n';
           });
@@ -304,6 +303,7 @@ export var data = {
     }
 
     if (type == FILETYPE.JSON) {
+      var outputContent = [];
       content.forEach(node => {
         var obj = {};
         obj.title = node.title;
@@ -311,7 +311,7 @@ export var data = {
         obj.colorID = node.colorID;
         obj.tags = node.tags;
         obj.body = node.body.split("\n");
-        outputContent.nodes.push(obj);
+        outputContent.push(obj);
       });
       output += JSON.stringify(outputContent, null, 4);
     }

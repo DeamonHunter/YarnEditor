@@ -136,7 +136,7 @@ export var App = function(name, version) {
       deferredPrompt = e;
       // Update UI to notify the user they can add to home screen
       addBtn.style.display = 'block';
-    
+
       addBtn.addEventListener('click', (e) => {
         // hide our user interface that shows our A2HS button
         addBtn.style.display = 'none';
@@ -190,14 +190,6 @@ export var App = function(name, version) {
     $('.search-tags input').click(self.updateSearch);
 
     $(window).on('resize', self.workspace.updateArrows);
-              e.preventDefault();
-              e.preventDefault();
-              e.preventDefault();
-                data.trySave(data.editingType())
-              }
-              else {
-              e.preventDefault();
-              e.preventDefault();
 
     this.guessPopUpHelper = function() {
       if (/^\[color=#([a-zA-Z0-9]{3,6})$/.test(self.getTagBeforeCursor())) {
