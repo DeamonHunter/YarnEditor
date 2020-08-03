@@ -385,6 +385,9 @@ export const data = {
         obj.colorID = node.colorID;
         obj.tags = node.tags;
         obj.body = node.body.split("\n");
+        while (obj.body.length > 1 && obj.body[obj.body.length - 1] == "") {
+          obj.body.pop();
+        }
         outputContent.push(obj);
       });
       output += JSON.stringify(outputContent, null, 4);
@@ -403,6 +406,9 @@ export const data = {
         obj.colorID = node.colorID;
         obj.tags = node.tags;
         obj.body = node.body.split("\n");
+        while(obj.body.length > 1 && obj.body[obj.body.length - 1] == ""){
+          obj.body.pop();
+        }
         outputContent.push(obj);
         outputContent.nodes.push(obj);
       });
