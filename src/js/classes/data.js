@@ -9,6 +9,7 @@ export const data = {
   editingName: ko.observable('NewFile'),
   editingType: ko.observable('json'),
   editingFolder: ko.observable(null),
+  editingCode: ko.observable(null),
   isDocumentDirty: ko.observable(false),
   lastStorageHost: ko.observable('LOCAL'), // GIST | LOCAL
   editingFileFolder: function(addSubPath = '') {
@@ -70,6 +71,7 @@ export const data = {
       data.editingPath(editingPath);
       data.editingName(editingName);
       data.editingType(editingType);
+      data.editingCode(null);
       data.editingFolder(editingFolder);
       data.lastStorageHost(lastStorageHost);
       app.nodes([]);
@@ -127,7 +129,7 @@ export const data = {
       if (key === '0') data.openFile(value, value.name);
       else data.appendFile(value, value.name);
     });
-    
+
   },
   openFolder: function(e, foldername) {
     editingFolder = foldername;
@@ -144,6 +146,7 @@ export const data = {
     const lowerFileName = filename.toLowerCase();
 
     if (lowerFileName.endsWith('.json')) return FILETYPE.JSON;
+    else if (lowerFileName.endsWith('.dialogue')) return FILETYPE.STAXEL;
     else if (lowerFileName.endsWith('.yarn.txt')) return FILETYPE.YARN;
     else if (lowerFileName.endsWith('.yarn')) return FILETYPE.YARN;
     else if (lowerFileName.endsWith('.xml')) return FILETYPE.XML;
@@ -163,9 +166,44 @@ export const data = {
         return;
       }
       for (let i = 0; i < content.length; i++) {
-        objects.push(content[i]);
+        var loadedObj = content[i];
+        var obj = {};
+        obj.title = loadedObj.title;
+        obj.position = loadedObj.position;
+        obj.colorID = loadedObj.colorID;
+        obj.tags = loadedObj.tags;
+        obj.body = '';
+        if (Array.isArray(loadedObj.body)) {
+          loadedObj.body.forEach(line => {
+            obj.body += line + '\n';
+          });
+        }
+        else
+          obj.body = loadedObj.body;
+        objects.push(obj);
       }
-    } else if (type == FILETYPE.YARN) {
+    }
+    else if (type == FILETYPE.STAXEL) {
+      content = JSON.parse(content);
+      if (!content) {
+        return;
+      }
+      data.editingCode(content.code);
+      for (i = 0; i < content.nodes.length; i++) {
+        var loadedObj = content.nodes[i];
+        var obj = {};
+        obj.title = loadedObj.title;
+        obj.position = loadedObj.position;
+        obj.colorID = loadedObj.colorID;
+        obj.tags = loadedObj.tags;
+        obj.body = '';
+        loadedObj.body.forEach(line => {
+          obj.body += line + '\n';
+        });
+        objects.push(obj);
+      }
+    }
+    else if (type == FILETYPE.YARN) {
       var lines = content.split(/\r?\n/);
       var obj = null;
       var index = 0;
@@ -324,7 +362,7 @@ export const data = {
     });
     return appNodes;
   },
-  
+
   getNodesAsObjects: function() {
     const nodesObjects = [];
     const nodes = app.nodes();
@@ -339,7 +377,36 @@ export const data = {
     var content = data.getNodesAsObjects();
 
     if (type == FILETYPE.JSON) {
-      output = JSON.stringify(content, null, '\t');
+      var outputContent = [];
+      content.forEach(node => {
+        var obj = {};
+        obj.title = node.title;
+        obj.position = node.position;
+        obj.colorID = node.colorID;
+        obj.tags = node.tags;
+        obj.body = node.body.split("\n");
+        outputContent.push(obj);
+      });
+      output += JSON.stringify(outputContent, null, 4);
+    }
+    else if (type == FILETYPE.STAXEL) {
+      var code = data.editingCode();
+      if (code == null)
+        code = 'staxel.villager.MISSINGCODE'
+      var outputContent = {};
+      outputContent.code = code;
+      outputContent.nodes = [];
+      content.forEach(node => {
+        var obj = {};
+        obj.title = node.title;
+        obj.position = node.position;
+        obj.colorID = node.colorID;
+        obj.tags = node.tags;
+        obj.body = node.body.split("\n");
+        outputContent.push(obj);
+        outputContent.nodes.push(obj);
+      });
+      output += JSON.stringify(outputContent, null, 4);
     } else if (type == FILETYPE.YARN) {
       for (let i = 0; i < content.length; i++) {
         output += 'title: ' + content[i].title + '\n';
@@ -461,7 +528,7 @@ export const data = {
     Swal.fire({
       title: '💾 Save file - enter file name',
       html: `<input id="swal-input1" list="select-file-name" name="select" placeholder="${data.editingName()}">
-      <datalist class="form-control" id="select-file-name">    
+      <datalist class="form-control" id="select-file-name">
         ${suggestions && suggestions.map(suggestion => `<option value="${suggestion}" />`).join('')}
       </datalist>`,
       onOpen: () => {
@@ -490,7 +557,7 @@ export const data = {
         new Blob([yarnData], {type: 'text/plain'}),
       ];
       const file = new File(parts, editingName, {});
-  
+
       if (navigator.canShare && navigator.canShare({
         files: [file]
       })) {
@@ -562,6 +629,7 @@ export const data = {
             data.lastStorageHost('GIST');
             data.editingPath(null);
             data.editingName(value);
+            data.editingCode(null);
             app.refreshWindowTitle();
           }
         });

@@ -102,7 +102,12 @@
           <span class="item" data-bind="click: function() { app.data.trySave('json');}">
             <img style="margin:0; padding:0" width="20px" src="./public/icon.ico" alt="Yarn Icon" />
             &nbsp;
-            Save As Json
+            Save As Staxel
+          </span>
+          <span class="item" data-bind="click: function() { app.data.trySave('dialogue');}">
+            <img style="margin:0; padding:0" width="20px" src="./public/images/nexel.ico" alt="Nexel Icon" />
+            &nbsp;
+            Save As Nexel
           </span>
           <span class="item" data-bind="click: function() { app.data.trySave('yarn'); }">
             <img style="margin:0; padding:0" width="20px" src="./public/icon.ico" alt="Yarn Icon" />
@@ -191,7 +196,7 @@
             <button class="bbcode-button" onclick="app.richTextFormatter.insertTag('opt')" title="Choice/Link">❔</button>
             <button class="bbcode-button" onclick="app.insertEmoji()" title="Emoji">😉</button>
           </span>
-          
+
           <!-- ko if:app.usingVisualStudioCodeExtension() -->
           <button class="bbcode-button" id="edit-node-in-vscode" onclick="app.editNodeInVisualStudioCodeEditor(app.editing())">🛠️ Edit in Visual Studio Code Text Editor</button>
           <!-- /ko -->
