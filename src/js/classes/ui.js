@@ -6,7 +6,8 @@ export const UI = function(app) {
   // Markup selector -----------------------------------------------------------
   this.availableMarkupLanguages = [
     { id: 'bbcode', name: 'Bbcode' },
-    { id: 'html', name: 'Html' }
+    { id: 'html', name: 'Html' },
+    { id: 'staxel', name: 'Staxel' }
   ];
 
   // Theme selector -----------------------------------------------------------
@@ -81,7 +82,7 @@ export const UI = function(app) {
     $('.settings-dialog .form')
       .css({ y: '0' })
       .transition({ y: '-100' }, 250);
-    
+
     setTimeout(() => app.settings.apply(), 100);
   };
 
