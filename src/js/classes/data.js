@@ -384,7 +384,7 @@ export const data = {
         obj.position = node.position;
         obj.colorID = node.colorID;
         obj.tags = node.tags;
-        obj.body = node.body.split("\n");
+        obj.body = node.body.replace(/(\r\n|\r)/gm, "\n").split("\n");
         while (obj.body.length > 1 && obj.body[obj.body.length - 1] == "") {
           obj.body.pop();
         }
@@ -405,7 +405,7 @@ export const data = {
         obj.position = node.position;
         obj.colorID = node.colorID;
         obj.tags = node.tags;
-        obj.body = node.body.split("\n");
+        obj.body = node.body.replace(/(\r\n|\r)/gm, "\n").split("\n");
         while(obj.body.length > 1 && obj.body[obj.body.length - 1] == ""){
           obj.body.pop();
         }
