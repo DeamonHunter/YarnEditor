@@ -106,22 +106,33 @@ export const data = {
 
   openFile: function(file, filename) {
     if (data.editingPath()) {
-      if (
-        !confirm(
-          'Are you sure you want to close \n' +
-            data.editingPath() +
-            '\nAny unsaved progress will be lost...'
-        )
-      ) {
-        return;
-      }
+      Swal.fire({
+        title: '📔 Close the file?',
+        text: 'Are you sure you want to close \r\n' + data.editingPath() + '\r\nAny unsaved progress will be lost...',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes.',
+        cancelButtonText: 'No!',
+        reverseButtons: true
+      }).then((result) => {
+        if (!result.value)
+          return
+        data.editingName(filename.replace(/^.*[\\\/]/, ''));
+        data.readFile(file, filename, true);
+        data.isDocumentDirty(false);
+        data.editingPath(file.path);
+        data.lastStorageHost('LOCAL');
+        app.refreshWindowTitle();
+      });
     }
-    data.editingName(filename.replace(/^.*[\\\/]/, ''));
-    data.readFile(file, filename, true);
-    data.isDocumentDirty(false);
-    data.editingPath(file.path);
-    data.lastStorageHost('LOCAL');
-    app.refreshWindowTitle();
+    else {
+      data.editingName(filename.replace(/^.*[\\\/]/, ''));
+      data.readFile(file, filename, true);
+      data.isDocumentDirty(false);
+      data.editingPath(file.path);
+      data.lastStorageHost('LOCAL');
+      app.refreshWindowTitle();
+    }
   },
   openFiles: function(file, filename) {
     const files = document.getElementById('open-file').files;
