@@ -130,7 +130,7 @@ export var App = function(name, version) {
     });
     window.addEventListener('DOMContentLoaded', e => {
       this.data.loadAppStateFromLocalStorage();
-      
+
       const parsedUrl = new URL(window.location);
       const sharedText = parsedUrl.searchParams.get('text') || parsedUrl.searchParams.get('url');
       if (sharedText !== null) {
@@ -502,7 +502,7 @@ export var App = function(name, version) {
     if (self.usingVisualStudioCodeExtension() && self.editingVisualStudioCodeFile()) {
       window.vsCodeApi.postMessage({
         type: 'DocumentEdit',
-        
+
         // we just send the whole doc here every time...
         payload: data.getSaveData(data.editingType())
       });
@@ -805,16 +805,19 @@ export var App = function(name, version) {
       const autoComplete = $('#toglAutocomplete').prop('checked');
       if (evt.action === 'insert' && autoComplete) {
         autoCompleteTimeout && clearTimeout (autoCompleteTimeout);
-        autoCompleteTimeout = setTimeout(() => {
+
+        var block = (lines) => {
           autoCompleteTimeout = undefined;
-          self.richTextFormatter.completableTags.forEach( tag => {
-            if (self.getTagBeforeCursor() === tag.Start) {
+          var lastCharacter = lines[lines.length - 1].slice(-1);
+          self.richTextFormatter.completableTags.forEach(tag => {
+            if (self.getTagBeforeCursor() === tag.Start && lastCharacter === tag.Start.slice(-1)) {
               tag.Completion && self.insertTextAtCursor(tag.Completion);
               tag.Offset && self.moveEditCursor(tag.Offset);
               tag.Func && tag.Func();
             }
           });
-        }, 200);
+        };
+        autoCompleteTimeout = setTimeout(() => block(evt.lines), 200);
       }
     });
 

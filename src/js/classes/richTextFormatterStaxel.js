@@ -2,9 +2,8 @@ export const StaxelRichTextFormatter = function(app) {
   const self = this;
 
   this.completableTags = Object.freeze([
-    { Start: '[[', Completion: ' answer: | ]] ', Offset: -4 },
-    { Start: '<<', Completion: ' >> ', Offset: -3 },
-    { Start: '^c:;', Completion: '^c:pop; ', Offset: -8, Func: () => { app.insertColorCode(); } },
+    { Start: '<<', Completion: '>>', Offset: -2 },
+    { Start: '^c:', Completion: ';^c:pop; ', Offset: -8, Func: () => { app.insertColorCode(); } },
     { Start: '<b', Completion: '></b> ', Offset: -5 },
     { Start: '<img', Completion: '></img> ', Offset: -7 },
     { Start: '<i', Completion: '></i> ', Offset: -5 },
