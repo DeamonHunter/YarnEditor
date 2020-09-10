@@ -631,7 +631,7 @@ input[type='checkbox'] {
 .node-editor .form .editor-container {
   margin-top: 2px;
   width: 100%;
-  height: calc(100% - 85px);
+  height: calc(95% - 85px);
   float: left;
   overflow: hidden;
   position: relative;
