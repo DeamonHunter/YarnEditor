@@ -100,15 +100,17 @@
           </span>
           <!-- /ko -->
           <span class="item" data-bind="click: function() { app.data.trySave('json');}">
-            <img style="margin:0; padding:0" width="20px" src="./public/icon.ico" alt="Yarn Icon" />
+            <img style="margin:0; padding:0" width="20px" src="./public/images/staxel.ico" alt="Staxel Icon" />
             &nbsp;
             Save As Staxel
           </span>
+          <!--
           <span class="item" data-bind="click: function() { app.data.trySave('dialogue');}">
             <img style="margin:0; padding:0" width="20px" src="./public/images/nexel.ico" alt="Nexel Icon" />
             &nbsp;
             Save As Nexel
           </span>
+          -->
           <span class="item" data-bind="click: function() { app.data.trySave('yarn'); }">
             <img style="margin:0; padding:0" width="20px" src="./public/icon.ico" alt="Yarn Icon" />
             &nbsp;
@@ -474,7 +476,8 @@
 <!-- Hidden fields, file dialogs, and elements -->
 <div class="hidden">
   <input type="file" id="open-image" accept=".jpg,.jpeg,.png,.gif,.bmp"/>
-  <input type="file" id="open-file" multiple="true" accept=".yarn,.txt,.xml,.json,.dialogue,.twee,.tw2"/>
+  <!--<input type="file" id="open-file" multiple="true" accept=".yarn,.txt,.xml,.json,.dialogue,.twee,.tw2"/>-->
+  <input type="file" id="open-file" multiple="true" accept=".yarn,.txt,.xml,.json,.twee,.tw2"/>
   <input type="file" id="open-folder" webkitdirectory directory/>
   <input type="file" id="save-file" nwsaveas="filename.txt" />
 </div>
