@@ -420,7 +420,6 @@ export const data = {
         while(obj.body.length > 1 && obj.body[obj.body.length - 1] == ""){
           obj.body.pop();
         }
-        outputContent.push(obj);
         outputContent.nodes.push(obj);
       });
       output += JSON.stringify(outputContent, null, 4);
